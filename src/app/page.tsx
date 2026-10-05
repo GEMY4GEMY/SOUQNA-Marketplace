@@ -18,7 +18,7 @@ export default function Home() {
         <div className="shell nav">
           <div className="logo">SOUQNA <span>سوقنا</span></div>
           <nav className="navlinks"><a href="#">الرئيسية</a><a href="#categories">الأقسام</a><a href="#">المفضلة</a></nav>
-          <button className="post">+ أضف إعلانك</button>
+          <a className="post" href="/post-ad">+ أضف إعلانك</a>
         </div>
       </header>
       <main>
