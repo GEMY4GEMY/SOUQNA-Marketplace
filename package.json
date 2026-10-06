@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "owner:bootstrap": "tsx scripts/bootstrap-owner.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",
