@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateAdInput } from "@/lib/validation/ad";
+import { currentActor } from "@/lib/auth/current-user";
+import { requirePermission } from "@/lib/auth/server-guards";
 
-// Public discovery endpoint. Pagination is intentionally bounded.
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const take = Math.min(Math.max(Number(params.get("limit")) || 20, 1), 50);
@@ -21,21 +22,39 @@ export async function GET(request: NextRequest) {
       area: { select: { nameAr: true, slug: true } },
     },
   });
-
   return NextResponse.json({ ads });
 }
 
 export async function POST(request: NextRequest) {
-  // Authentication/session wiring is the next milestone.
-  // Until then, creation is intentionally closed rather than accepting spoofed owner IDs.
+  const actor = await currentActor();
+  try { requirePermission(actor, "ads.create"); }
+  catch (error) {
+    const code = error instanceof Error ? error.message : "FORBIDDEN";
+    return NextResponse.json({ error: code }, { status: code === "UNAUTHENTICATED" ? 401 : 403 });
+  }
+
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "INVALID_JSON" }, { status: 400 });
-
   const parsed = validateAdInput(body);
   if (!parsed.ok) return NextResponse.json({ error: "VALIDATION_ERROR", details: parsed.errors }, { status: 422 });
 
-  return NextResponse.json(
-    { error: "AUTH_REQUIRED", message: "تسجيل الدخول مطلوب قبل نشر الإعلان." },
-    { status: 401 },
-  );
+  const ad = await db.ad.create({
+    data: {
+      ownerId: actor!.id,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      price: parsed.data.price,
+      categoryId: parsed.data.categoryId,
+      governorateId: parsed.data.governorateId,
+      areaId: parsed.data.areaId,
+      status: "PENDING",
+    },
+    select: { id: true, title: true, status: true, createdAt: true },
+  });
+
+  await db.auditLog.create({
+    data: { actorId: actor!.id, action: "AD_CREATED", entityType: "Ad", entityId: ad.id },
+  });
+
+  return NextResponse.json({ ad }, { status: 201 });
 }
