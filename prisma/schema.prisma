@@ -41,6 +41,7 @@ model User {
   role         UserRole    @default(USER)
   status       UserStatus  @default(ACTIVE)
   ads          Ad[]
+  images       AdImage[]
   auditEvents  AuditLog[]  @relation("AuditActor")
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
@@ -104,9 +105,24 @@ model Ad {
   attributes    Json?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  images        AdImage[]
 
   @@index([status, governorateId, categoryId])
   @@index([ownerId, status])
+}
+
+model AdImage {
+  id        String   @id @default(cuid())
+  adId      String
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  uploaderId String
+  uploader  User     @relation(fields: [uploaderId], references: [id])
+  storageKey String  @unique
+  url       String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([adId, position])
 }
 
 model AuditLog {
