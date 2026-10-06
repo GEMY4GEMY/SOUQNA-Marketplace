@@ -42,6 +42,7 @@ model User {
   status       UserStatus  @default(ACTIVE)
   ads          Ad[]
   images       AdImage[]
+  favorites    Favorite[]
   auditEvents  AuditLog[]  @relation("AuditActor")
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
@@ -106,6 +107,7 @@ model Ad {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   images        AdImage[]
+  favorites     Favorite[]
 
   @@index([status, governorateId, categoryId])
   @@index([ownerId, status])
@@ -123,6 +125,18 @@ model AdImage {
   createdAt DateTime @default(now())
 
   @@index([adId, position])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  adId      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, adId])
+  @@index([userId, createdAt])
 }
 
 model AuditLog {
