@@ -14,7 +14,8 @@
     "owner:bootstrap": "tsx scripts/bootstrap-owner.ts",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:status": "prisma migrate status"
+    "db:status": "prisma migrate status",
+    "db:staging:init": "prisma db push && prisma db seed"
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",
