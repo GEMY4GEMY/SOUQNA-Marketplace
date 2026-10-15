@@ -2,11 +2,10 @@ import { createHmac } from "crypto";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 
-// Configure the ingress to overwrite forwarded client-IP headers; these are not identity proof.
+// Railway public HTTP edge sets X-Real-IP. Private-network callers are not trusted.
 export async function checkRegistrationIpLimit(req: NextRequest): Promise<boolean> {
-  const forwarded = req.headers.get("x-forwarded-for");
-  const address = forwarded?.split(",").map(s => s.trim()).filter(Boolean).at(-1)
-    || req.headers.get("x-real-ip") || "unidentified";
+  const address = req.headers.get("x-real-ip")?.trim();
+  if (!address || address.length > 64 || /[^a-fA-F0-9:.]/.test(address)) return false;
   const secret = process.env.AUTH_SECRET;
   if (!secret) return false;
   const digest = createHmac("sha256", secret).update(address).digest("hex");
