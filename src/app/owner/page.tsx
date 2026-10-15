@@ -1,41 +1,18 @@
-const stats = [
-  ["المستخدمون","24,580","+8.2%"],
-  ["الإعلانات النشطة","8,420","+5.4%"],
-  ["بانتظار المراجعة","84","يتطلب إجراء"],
-  ["إيراد الشهر","82,600 ج.م","+12.1%"],
-];
+import Link from "next/link";
+import { db } from "@/lib/db";
 
-const pending = [
-  ["#5812","iPhone 15 Pro 256GB","موبايلات","28,500 ج.م"],
-  ["#5811","شقة للبيع - المسلة","عقارات","1,850,000 ج.م"],
-  ["#5809","Kia Sportage 2021","سيارات","1,420,000 ج.م"],
-];
-
-export default function OwnerDashboard() {
-  return (
-    <main className="owner">
-      <aside className="ownerSide">
-        <div className="ownerBrand">SOUQNA <small>OWNER</small></div>
-        <nav>
-          {["لوحة التحكم","الإعلانات","المستخدمون","التجار","المدفوعات","الباقات","الأقسام","المناطق","البلاغات","الموظفون","سجل العمليات","الإعدادات"].map((x,i)=><a className={i===0?"active":""} href="#" key={x}>{x}</a>)}
-        </nav>
-      </aside>
-      <section className="ownerMain">
-        <header className="ownerTop"><div><h1>لوحة المالك</h1><p>نظرة شاملة على أداء SOUQNA</p></div><span className="ownerBadge">SUPER OWNER</span></header>
-        <div className="statGrid">{stats.map(([label,value,note])=><article className="stat" key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>)}</div>
-        <div className="ownerGrid">
-          <article className="panel">
-            <div className="panelHead"><h2>إعلانات تنتظر المراجعة</h2><a href="#">عرض الكل</a></div>
-            <div className="table">
-              {pending.map(([id,title,cat,price])=><div className="tableRow" key={id}><span>{id}</span><strong>{title}</strong><span>{cat}</span><b>{price}</b><button>مراجعة</button></div>)}
-            </div>
-          </article>
-          <article className="panel">
-            <div className="panelHead"><h2>إجراءات سريعة</h2></div>
-            <div className="quick"><button>+ إضافة قسم</button><button>+ إضافة منطقة</button><button>إدارة الموظفين</button><button>الأسعار والباقات</button></div>
-          </article>
-        </div>
-      </section>
-    </main>
-  );
+export const dynamic = "force-dynamic";
+export default async function OwnerDashboard() {
+ const [users,active,pending,rejected,recent] = await Promise.all([
+ db.user.count(),db.ad.count({where:{status:"ACTIVE"}}),
+ db.ad.count({where:{status:"PENDING"}}),db.ad.count({where:{status:"REJECTED"}}),
+ db.ad.findMany({where:{status:"PENDING"},orderBy:{createdAt:"asc"},take:8,include:{category:{select:{nameAr:true}}}})
+ ]);
+ const stats=[["المستخدمون",users],["الإعلانات النشطة",active],["بانتظار المراجعة",pending],["الإعلانات المرفوضة",rejected]] as const;
+ return <main className="owner"><aside className="ownerSide"><div className="ownerBrand">SOUQNA <small>OWNER</small></div><nav><Link href="/owner">لوحة التحكم</Link><Link href="/owner/ads">إدارة الإعلانات</Link><Link href="/">الموقع الرئيسي</Link></nav></aside>
+ <section className="ownerMain"><header className="ownerTop"><div><h1>لوحة المالك</h1><p>بيانات مباشرة من قاعدة بيانات SOUQNA</p></div><span className="ownerBadge">ADMINISTRATION</span></header>
+ <div className="statGrid">{stats.map(([label,value])=><article className="stat" key={label}><span>{label}</span><strong>{value.toLocaleString("ar-EG")}</strong></article>)}</div>
+ <div className="ownerGrid"><article className="panel"><div className="panelHead"><h2>إعلانات تنتظر المراجعة</h2><Link href="/owner/ads">عرض الكل</Link></div>
+ <div className="table">{recent.length?recent.map(ad=><div className="tableRow" key={ad.id}><span>#{ad.id.slice(-6)}</span><strong>{ad.title}</strong><span>{ad.category.nameAr}</span><b>{ad.price?Number(ad.price).toLocaleString("ar-EG")+" ج.م":"السعر عند التواصل"}</b><Link href="/owner/ads">مراجعة</Link></div>):<p>لا توجد إعلانات تنتظر المراجعة.</p>}</div></article></div>
+ </section></main>;
 }
