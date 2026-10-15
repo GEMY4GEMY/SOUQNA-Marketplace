@@ -22,6 +22,18 @@ export async function POST(req: NextRequest) {
   if (previous && previous.createdAt.getTime() > now.getTime() - 60_000)
     return NextResponse.json({ error: "PLEASE_WAIT" }, { status: 429 });
 
+  const recentCode = await db.otpChallenge.findFirst({
+    where: { destination: phone, purpose: "REGISTER", createdAt: { gt: new Date(now.getTime() - 60_000) } },
+    orderBy: { createdAt: "desc" }, select: { id: true }
+  });
+  if (recentCode)
+    return NextResponse.json({ error: "PLEASE_WAIT" }, { status: 429 });
+  const sentToday = await db.otpChallenge.count({
+    where: { destination: phone, purpose: "REGISTER", createdAt: { gt: new Date(now.getTime() - 24 * 60 * 60_000) } }
+  });
+  if (sentToday >= 10)
+    return NextResponse.json({ error: "OTP_DAILY_LIMIT" }, { status: 429 });
+
   const code = String(randomInt(100000, 1000000));
   const expiresAt = new Date(now.getTime() + 5 * 60_000);
   const pending = await db.pendingRegistration.upsert({
