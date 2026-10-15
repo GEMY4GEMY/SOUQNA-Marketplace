@@ -25,3 +25,18 @@ export async function PATCH(request:NextRequest){
   await db.auditLog.create({data:{actorId:actor!.id,action:"CATEGORY_UPDATED",entityType:"Category",entityId:id,metadata:data}});
   return NextResponse.json({category});
 }
+
+export async function POST(request:NextRequest){
+  if(!isSameOrigin(request))return NextResponse.json({error:"INVALID_ORIGIN"},{status:403});
+  const actor=await currentActor();try{requirePermission(actor,"categories.manage");}catch(e){const code=e instanceof Error?e.message:"FORBIDDEN";return NextResponse.json({error:code},{status:code==="UNAUTHENTICATED"?401:403});}
+  const b=await request.json().catch(()=>null);
+  const nameAr=typeof b?.nameAr==="string"?b.nameAr.trim().slice(0,80):"";
+  const nameEn=typeof b?.nameEn==="string"?b.nameEn.trim().slice(0,80):"";
+  const slug=typeof b?.slug==="string"?b.slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,70):"";
+  if(nameAr.length<2||nameEn.length<2||slug.length<2)return NextResponse.json({error:"INVALID_INPUT"},{status:422});
+  if(await db.category.findUnique({where:{slug},select:{id:true}}))return NextResponse.json({error:"SLUG_EXISTS"},{status:409});
+  const last=await db.category.findFirst({where:{parentId:null},orderBy:{sortOrder:"desc"},select:{sortOrder:true}});
+  const category=await db.category.create({data:{nameAr,nameEn,slug,icon:typeof b.icon==="string"?b.icon.trim().slice(0,12)||null:null,sortOrder:(last?.sortOrder||0)+1},select:{id:true,nameAr:true,nameEn:true,slug:true,active:true,icon:true,imageUrl:true,sortOrder:true,_count:{select:{ads:true}}}});
+  await db.auditLog.create({data:{actorId:actor!.id,action:"CATEGORY_CREATED",entityType:"Category",entityId:category.id,metadata:{slug}}});
+  return NextResponse.json({category},{status:201});
+}
