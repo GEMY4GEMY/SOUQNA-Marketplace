@@ -17,7 +17,7 @@ function hasValidImageSignature(bytes: Buffer, type: string): boolean {
   return false;
 }
 
-export async function saveLocalImage(file: File) {
+async function saveImage(file: File, folder: "ads" | "categories") {
   if (!allowed.has(file.type)) throw new Error("UNSUPPORTED_IMAGE");
   if (file.size > MAX_IMAGE_BYTES) throw new Error("IMAGE_TOO_LARGE");
 
@@ -26,13 +26,21 @@ export async function saveLocalImage(file: File) {
 
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const name = `${randomUUID()}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "ads");
+  const dir = path.join(process.cwd(), "public", "uploads", folder);
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, name), bytes);
-  return { storageKey: `ads/${name}`, url: `/uploads/ads/${name}` };
+  return { storageKey: `${folder}/${name}`, url: `/uploads/${folder}/${name}` };
+}
+
+export async function saveLocalImage(file: File) {
+  return saveImage(file, "ads");
+}
+
+export async function saveCategoryImage(file: File) {
+  return saveImage(file, "categories");
 }
 
 export async function deleteLocalImage(storageKey: string) {
-  if (!storageKey.startsWith("ads/")) return;
+  if (!storageKey.startsWith("ads/") && !storageKey.startsWith("categories/")) return;
   await unlink(path.join(process.cwd(), "public", "uploads", storageKey)).catch(() => {});
 }
