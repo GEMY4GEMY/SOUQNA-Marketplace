@@ -34,3 +34,6 @@ coverage/
 
 # misc
 *.pem
+
+# Runtime uploaded media (local/staging provider)
+public/uploads/
