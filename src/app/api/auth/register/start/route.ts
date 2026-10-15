@@ -9,7 +9,7 @@ export async function POST(req:NextRequest){
  if(!process.env.SMS_PROVIDER||!process.env.SMS_API_KEY)return NextResponse.json({error:"OTP_PROVIDER_NOT_CONFIGURED"},{status:503});
  const code=String(randomInt(100000,1000000)),secret=process.env.AUTH_SECRET||"";
  const codeHash=createHash("sha256").update(phone+":"+code+":"+secret).digest("hex");
- await db.otpChallenge.create({data:{destination:phone,codeHash,expiresAt:new Date(Date.now()+5*60*1000)}});
+ await db.otpChallenge.create({data:{destination:phone,purpose:"REGISTER",codeHash,expiresAt:new Date(Date.now()+5*60*1000)}});
  // SMS adapter sends code only after provider credentials are configured.
  return NextResponse.json({ok:true});
 }
