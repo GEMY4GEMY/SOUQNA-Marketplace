@@ -6,7 +6,7 @@ export async function GET() {
     db.category.findMany({
       where: { active: true, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { nameAr: "asc" }],
-      select: { id: true, nameAr: true, slug: true, icon: true, imageUrl: true, sortOrder: true },
+      select: { id: true, nameAr: true, slug: true, icon: true, imageUrl: true, sortOrder: true, children: { where: { active: true }, orderBy: [{ sortOrder: "asc" }, { nameAr: "asc" }], select: { id: true, nameAr: true, slug: true, icon: true } } },
     }),
     db.governorate.findMany({
       where: { active: true },
