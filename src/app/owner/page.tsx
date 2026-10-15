@@ -9,7 +9,7 @@ export default async function OwnerDashboard() {
  db.ad.findMany({where:{status:"PENDING"},orderBy:{createdAt:"asc"},take:8,include:{category:{select:{nameAr:true}}}})
  ]);
  const stats=[["المستخدمون",users],["الإعلانات النشطة",active],["بانتظار المراجعة",pending],["الإعلانات المرفوضة",rejected]] as const;
- return <main className="owner"><aside className="ownerSide"><div className="ownerBrand">SOUQNA <small>OWNER</small></div><nav><Link href="/owner">لوحة التحكم</Link><Link href="/owner/ads">إدارة الإعلانات</Link><Link href="/">الموقع الرئيسي</Link></nav></aside>
+ return <main className="owner"><aside className="ownerSide"><div className="ownerBrand">SOUQNA <small>OWNER</small></div><nav><Link href="/owner">لوحة التحكم</Link><Link href="/owner/ads">إدارة الإعلانات</Link><Link href="/owner/categories">إدارة الأقسام</Link><Link href="/">الموقع الرئيسي</Link></nav></aside>
  <section className="ownerMain"><header className="ownerTop"><div><h1>لوحة المالك</h1><p>بيانات مباشرة من قاعدة بيانات SOUQNA</p></div><span className="ownerBadge">ADMINISTRATION</span></header>
  <div className="statGrid">{stats.map(([label,value])=><article className="stat" key={label}><span>{label}</span><strong>{value.toLocaleString("ar-EG")}</strong></article>)}</div>
  <div className="ownerGrid"><article className="panel"><div className="panelHead"><h2>إعلانات تنتظر المراجعة</h2><Link href="/owner/ads">عرض الكل</Link></div>
