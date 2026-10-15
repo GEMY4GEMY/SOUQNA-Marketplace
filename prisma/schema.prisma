@@ -29,6 +29,7 @@ enum AuthProvider {
 }
 
 enum OtpPurpose {
+  SIGN_IN
   REGISTER
 }
 
