@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 type Area={id:string;nameAr:string;slug:string};
 type Governorate={id:string;nameAr:string;slug:string;areas:Area[]};
-type Category={id:string;nameAr:string;slug:string};
+type Category={id:string;nameAr:string;slug:string;children:{id:string;nameAr:string;slug:string;icon:string|null}[]};
 type Meta={categories:Category[];governorates:Governorate[]};
 
 export default function PostAdForm(){
@@ -30,14 +30,14 @@ export default function PostAdForm(){
   <section className="formCard"><h2>تفاصيل الإعلان</h2>
    <label>عنوان الإعلان<input name="title" required minLength={5} maxLength={90} placeholder="مثال: iPhone 15 Pro بحالة ممتازة"/></label>
    <div className="form2">
-    <label>القسم<select name="categoryId" required defaultValue=""><option value="" disabled>اختر القسم</option>{meta?.categories.map(x=><option value={x.id} key={x.id}>{x.nameAr}</option>)}</select></label>
+    <label>القسم<select name="categoryId" required defaultValue=""><option value="" disabled>اختر القسم</option>{meta?.categories.map(x=><optgroup key={x.id} label={x.nameAr}><option value={x.id}>{x.nameAr} — عام</option>{x.children.map(child=><option value={child.id} key={child.id}>{child.nameAr}</option>)}</optgroup>)}</select></label>
     <label>المحافظة<select name="governorateId" required value={gov} onChange={e=>setGov(e.target.value)}><option value="">اختر المحافظة</option>{meta?.governorates.map(x=><option value={x.id} key={x.id}>{x.nameAr}</option>)}</select></label>
    </div>
    <label>المنطقة<select name="areaId" defaultValue=""><option value="">اختر المنطقة</option>{areas.map(x=><option value={x.id} key={x.id}>{x.nameAr}</option>)}</select></label>
    <label>الوصف<textarea name="description" required minLength={20} maxLength={5000} rows={7} placeholder="اكتب المواصفات والحالة وأي تفاصيل مهمة..."/></label>
    <label>السعر (جنيه)<input name="price" type="number" min="0" step="1" placeholder="0"/></label>
   </section>
-  <section className="formCard"><h2>صور الإعلان</h2><div className="uploadBox"><strong>الصور — المرحلة التالية</strong><span>تم تجهيز قاعدة البيانات للصور، وسيتم ربط التخزين والرفع المباشر قبل النشر التجريبي.</span></div></section>
+  
   {message&&<div className="notice">{message}</div>}
   <div className="formActions"><button type="submit" className="primary" disabled={busy}>{busy?"جاري الإرسال...":"إرسال للمراجعة"}</button></div>
  </form>
