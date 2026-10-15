@@ -97,6 +97,9 @@ model Category {
   nameEn    String
   slug      String     @unique
   active    Boolean    @default(true)
+  icon      String?
+  imageUrl  String?
+  sortOrder Int        @default(0)
   ads       Ad[]
   createdAt DateTime   @default(now())
 }
