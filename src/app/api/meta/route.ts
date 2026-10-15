@@ -5,8 +5,8 @@ export async function GET() {
   const [categories, governorates] = await Promise.all([
     db.category.findMany({
       where: { active: true, parentId: null },
-      orderBy: { nameAr: "asc" },
-      select: { id: true, nameAr: true, slug: true },
+      orderBy: [{ sortOrder: "asc" }, { nameAr: "asc" }],
+      select: { id: true, nameAr: true, slug: true, icon: true, imageUrl: true, sortOrder: true },
     }),
     db.governorate.findMany({
       where: { active: true },
