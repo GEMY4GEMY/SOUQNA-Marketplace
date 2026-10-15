@@ -19,7 +19,6 @@ const categories = [
   ["وظائف", "Jobs", "jobs"],
   ["خدمات", "Services", "services"],
   ["أزياء", "Fashion", "fashion"],
-  ["حيوانات", "Animals", "animals"],
   ["معدات", "Equipment", "equipment"],
   ["متفرقات", "Other", "other"],
 ] as const;
@@ -39,11 +38,14 @@ async function main() {
     });
   }
 
+  await prisma.category.updateMany({ where: { slug: "animals" }, data: { active: false } });
+
   for (const [nameAr, nameEn, slug] of categories) {
+    const sortOrder = categories.findIndex((item) => item[2] === slug) + 1;
     await prisma.category.upsert({
       where: { slug },
-      update: { nameAr, nameEn, active: true },
-      create: { nameAr, nameEn, slug },
+      update: { nameAr, nameEn, active: true, sortOrder },
+      create: { nameAr, nameEn, slug, sortOrder },
     });
   }
 }
