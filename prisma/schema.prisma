@@ -29,7 +29,7 @@ enum AuthProvider {
 }
 
 enum OtpPurpose {
-  SIGN_IN
+  REGISTER
 }
 
 enum AdStatus {
@@ -185,7 +185,7 @@ model OtpChallenge {
   userId      String?
   user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
   destination String
-  purpose     OtpPurpose  @default(SIGN_IN)
+  purpose     OtpPurpose  @default(REGISTER)
   codeHash    String
   expiresAt   DateTime
   consumedAt  DateTime?
