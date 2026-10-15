@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 import { smsReady, sendRegistrationCode } from "@/lib/auth/sms";
+import { checkRegistrationIpLimit } from "@/lib/auth/registration-limit";
 
 const egypt = /^01[0125][0-9]{8}$/;
 export async function POST(req: NextRequest) {
@@ -14,6 +15,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "INVALID_INPUT" }, { status: 422 });
   if (!smsReady() || !process.env.AUTH_SECRET)
     return NextResponse.json({ error: "OTP_PROVIDER_NOT_CONFIGURED" }, { status: 503 });
+  if (!(await checkRegistrationIpLimit(req)))
+    return NextResponse.json({ error: "TOO_MANY_REQUESTS" }, { status: 429 });
   if (await db.user.findUnique({ where: { phone }, select: { id: true } }))
     return NextResponse.json({ error: "PHONE_EXISTS" }, { status: 409 });
 
