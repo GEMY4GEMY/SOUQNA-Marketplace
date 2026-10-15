@@ -18,18 +18,23 @@ export async function POST(req: NextRequest) {
     where: { destination: pending.phone, purpose: "REGISTER", consumedAt: null, expiresAt: { gt: new Date() } },
     orderBy: { createdAt: "desc" }
   });
-  if (!challenge || challenge.attempts >= 5)
+  if (!challenge)
+    return NextResponse.json({ error: "INVALID_OR_EXPIRED_CODE" }, { status: 401 });
+  const attempt = await db.otpChallenge.updateMany({
+    where: { id: challenge.id, consumedAt: null, attempts: { lt: 5 }, expiresAt: { gt: new Date() } },
+    data: { attempts: { increment: 1 } }
+  });
+  if (attempt.count !== 1)
     return NextResponse.json({ error: "INVALID_OR_EXPIRED_CODE" }, { status: 401 });
   const calculated = createHash("sha256").update(pending.phone + ":" + code + ":" + (process.env.AUTH_SECRET || "")).digest("hex");
   const a = Buffer.from(challenge.codeHash, "hex"), z = Buffer.from(calculated, "hex");
   if (a.length !== z.length || !timingSafeEqual(a, z)) {
-    await db.otpChallenge.update({ where: { id: challenge.id }, data: { attempts: { increment: 1 } } });
     return NextResponse.json({ error: "INVALID_OR_EXPIRED_CODE" }, { status: 401 });
   }
 
   try {
     const user = await db.$transaction(async (tx) => {
-      const claimed = await tx.otpChallenge.updateMany({ where: { id: challenge.id, consumedAt: null, attempts: { lt: 5 } }, data: { consumedAt: new Date() } });
+      const claimed = await tx.otpChallenge.updateMany({ where: { id: challenge.id, consumedAt: null, attempts: { lte: 5 } }, data: { consumedAt: new Date() } });
       if (claimed.count !== 1) throw new Error("CHALLENGE_USED");
       const created = await tx.user.create({ data: { name: pending.name, phone: pending.phone, passwordHash: pending.passwordHash, role: "USER" }, select: { id: true, name: true, role: true } });
       await tx.otpChallenge.update({ where: { id: challenge.id }, data: { userId: created.id } });
