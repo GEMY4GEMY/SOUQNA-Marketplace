@@ -21,6 +21,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "PHONE_EXISTS" }, { status: 409 });
 
   const now = new Date();
+  // Opportunistic bounded cleanup keeps expired registration state from accumulating.
+  await Promise.all([
+    db.pendingRegistration.deleteMany({ where: { expiresAt: { lt: now } } }),
+    db.otpChallenge.deleteMany({ where: { expiresAt: { lt: new Date(now.getTime() - 24 * 60 * 60_000) } } }),
+    db.registrationRateLimit.deleteMany({ where: { expiresAt: { lt: now } } })
+  ]);
   const previous = await db.pendingRegistration.findUnique({ where: { phone } });
   if (previous && previous.createdAt.getTime() > now.getTime() - 60_000)
     return NextResponse.json({ error: "PLEASE_WAIT" }, { status: 429 });
