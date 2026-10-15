@@ -1,42 +1,21 @@
-const categories = [
-  ["🚗", "سيارات ومركبات"],
-  ["🏠", "عقارات"],
-  ["📱", "موبايلات وإلكترونيات"],
-  ["🛋️", "أثاث وأجهزة"],
-  ["💼", "وظائف"],
-  ["🛠️", "خدمات"],
-  ["👕", "أزياء"],
-  ["🐾", "حيوانات"],
-  ["🚜", "معدات"],
-  ["📦", "متفرقات"],
-];
+import Link from "next/link";
+import { db } from "@/lib/db";
 
-export default function Home() {
-  return (
-    <>
-      <header className="header">
-        <div className="shell nav">
-          <div className="logo">SOUQNA <span>سوقنا</span></div>
-          <nav className="navlinks"><a href="#">الرئيسية</a><a href="#categories">الأقسام</a><a href="/favorites">المفضلة</a><a href="/auth">دخول / حساب جديد</a></nav>
-          <a className="post" href="/post-ad">+ أضف إعلانك</a>
-        </div>
-      </header>
-      <main>
-        <section className="hero shell">
-          <h1>كل اللي حواليك… <span style={{color:"var(--brand)"}}>في مكان واحد</span></h1>
-          <p>بيع، اشتري، واكتشف أفضل العروض والخدمات داخل الفيوم.</p>
-          <form className="search" action="/search">
-            <input name="q" aria-label="بحث" placeholder="بتدور على إيه؟ سيارة، شقة، موبايل..." />
-            <select aria-label="المنطقة" defaultValue="fayoum"><option value="fayoum">كل الفيوم</option><option>مدينة الفيوم</option><option>سنورس</option><option>إطسا</option><option>طامية</option><option>أبشواي</option><option>يوسف الصديق</option></select>
-            <button>بحث</button>
-          </form>
-        </section>
-        <section id="categories" className="section shell">
-          <h2>تصفح الأقسام</h2>
-          <div className="categories">{categories.map(([icon,name]) => <a className="card" href="#" key={name}><span className="icon">{icon}</span><strong>{name}</strong></a>)}</div>
-        </section>
-      </main>
-      <footer className="footer"><div className="shell"><strong>SOUQNA</strong> — سوق محلي يبدأ من الفيوم وقابل للتوسع لكل مصر.</div></footer>
-    </>
-  );
+export const dynamic = "force-dynamic";
+
+const fallbackIcons: Record<string,string> = {
+  vehicles:"🚗", properties:"🏠", electronics:"📱", "furniture-appliances":"🛋️",
+  jobs:"💼", services:"🛠️", fashion:"👕", equipment:"🚜", other:"📦"
+};
+
+export default async function Home() {
+  const categories = await db.category.findMany({
+    where:{active:true,parentId:null},
+    orderBy:[{sortOrder:"asc"},{nameAr:"asc"}],
+    select:{id:true,nameAr:true,slug:true,icon:true,imageUrl:true}
+  });
+  return <><header className="header"><div className="shell nav"><Link className="logo" href="/">SOUQNA <span>سوقنا</span></Link><nav className="navlinks"><Link href="/">الرئيسية</Link><a href="#categories">الأقسام</a><Link href="/favorites">المفضلة</Link><Link href="/auth">دخول / حساب جديد</Link></nav><Link className="post" href="/post-ad">＋ أضف إعلانك</Link></div></header>
+  <main><section className="hero shell"><div className="heroBadge">سوقك المحلي الأقرب ليك</div><h1>بيع واشتري بسهولة<br/><span>كل اللي حواليك في مكان واحد</span></h1><p>اكتشف أفضل الإعلانات والخدمات داخل الفيوم، بتجربة أسرع وأوضح.</p><form className="search" action="/search"><input name="q" aria-label="بحث" placeholder="ابحث عن سيارة، شقة، موبايل أو خدمة..." /><select name="governorate" aria-label="المنطقة" defaultValue=""><option value="">كل الفيوم</option></select><button>⌕ بحث</button></form></section>
+  <section id="categories" className="section shell"><div className="sectionTitle"><div><small>استكشف سوقنا</small><h2>تصفح الأقسام</h2></div><Link href="/search">عرض كل الإعلانات ←</Link></div><div className="categories">{categories.map(cat=><Link className="categoryCard" href={`/search?categoryId=${cat.id}`} key={cat.id}>{cat.imageUrl?<span className="categoryVisual"><img src={cat.imageUrl} alt="" /></span>:<span className="categoryIcon">{cat.icon||fallbackIcons[cat.slug]||"◈"}</span>}<strong>{cat.nameAr}</strong><small>تصفح الإعلانات</small></Link>)}</div></section></main>
+  <footer className="footer"><div className="shell footerInner"><div><strong>SOUQNA</strong><span>سوقنا</span></div><p>سوق محلي يبدأ من الفيوم، ويتوسع معاك لكل مصر.</p></div></footer></>;
 }
