@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isSameOrigin } from "@/lib/auth/same-origin";
 import { db } from "@/lib/db";
 import { currentActor } from "@/lib/auth/current-user";
 import { requirePermission } from "@/lib/auth/server-guards";
@@ -6,6 +7,7 @@ import { requirePermission } from "@/lib/auth/server-guards";
 type Context = { params: Promise<{ id: string }> };
 
 export async function POST(request: NextRequest, context: Context) {
+  if (!isSameOrigin(request)) return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 });
   const actor = await currentActor();
   try { requirePermission(actor, "ads.review"); }
   catch (error) {
