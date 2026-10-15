@@ -22,6 +22,16 @@ enum UserStatus {
   BLOCKED
 }
 
+enum AuthProvider {
+  PHONE
+  GOOGLE
+  APPLE
+}
+
+enum OtpPurpose {
+  SIGN_IN
+}
+
 enum AdStatus {
   DRAFT
   PENDING
@@ -44,6 +54,8 @@ model User {
   images       AdImage[]
   favorites    Favorite[]
   auditEvents  AuditLog[]  @relation("AuditActor")
+  authAccounts AuthAccount[]
+  otpChallenges OtpChallenge[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
@@ -152,4 +164,34 @@ model AuditLog {
 
   @@index([createdAt])
   @@index([actorId, createdAt])
+}
+
+model AuthAccount {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       AuthProvider
+  providerUserId String
+  email          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([provider, providerUserId])
+  @@index([userId, provider])
+}
+
+model OtpChallenge {
+  id          String      @id @default(cuid())
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination String
+  purpose     OtpPurpose  @default(SIGN_IN)
+  codeHash    String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  attempts    Int         @default(0)
+  createdAt   DateTime    @default(now())
+
+  @@index([destination, purpose, createdAt])
+  @@index([expiresAt])
 }
