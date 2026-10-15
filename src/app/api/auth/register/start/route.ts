@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { hashPassword } from "@/lib/auth/password";
 
 const egypt = /^01[0125][0-9]{8}$/;
 
