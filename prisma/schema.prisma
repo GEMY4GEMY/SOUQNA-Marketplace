@@ -205,3 +205,12 @@ model PendingRegistration {
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
+
+model RegistrationRateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+}
