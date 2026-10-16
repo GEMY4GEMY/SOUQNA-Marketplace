@@ -12,7 +12,7 @@ export default function PostAdForm(){
  const [meta,setMeta]=useState<Meta|null>(null);
  const [gov,setGov]=useState("");
  const [message,setMessage]=useState("");
- const [busy,setBusy]=useState(false);
+ const [busy,setBusy]=useState(false);\n const [images,setImages]=useState<File[]>([]);
  useEffect(()=>{fetch("/api/meta").then(r=>r.json()).then(setMeta).catch(()=>setMessage("تعذر تحميل الأقسام والمناطق."))},[]);
  const areas=useMemo(()=>meta?.governorates.find(x=>x.id===gov)?.areas??[],[meta,gov]);
 
@@ -24,7 +24,7 @@ export default function PostAdForm(){
   const data=await res.json().catch(()=>({}));
   if(res.status===401){router.push("/auth");return}
   if(!res.ok){setMessage(data.details?.join(" ")||"تعذر إرسال الإعلان.");setBusy(false);return}
-  setMessage("تم إرسال الإعلان للمراجعة بنجاح.");setBusy(false);e.currentTarget.reset();setGov("");
+  if(images.length){const imageForm=new FormData();images.forEach(file=>imageForm.append("images",file));const upload=await fetch(`/api/ads/${data.ad.id}/images`,{method:"POST",body:imageForm});if(!upload.ok){setMessage("تم إنشاء الإعلان، لكن تعذر رفع بعض الصور. يمكنك استكمال الصور لاحقًا.");setBusy(false);return}}\n  setMessage("تم إرسال الإعلان بالصور للمراجعة بنجاح.");setBusy(false);e.currentTarget.reset();setGov("");setImages([]);
  }
  return <form className="adForm" onSubmit={submit}>
   <section className="formCard"><h2>تفاصيل الإعلان</h2>
