@@ -22,7 +22,7 @@ export default async function SearchPage({ searchParams }: Props) {
     <section className="searchBody">
       <div className="resultsTop"><div><h1>نتائج البحث</h1><p>{q ? `نتائج عن “${q}”` : "كل الإعلانات المتاحة"} — {ads.length} إعلان</p></div></div>
       {ads.length === 0 ? <div className="emptyState"><strong>لا توجد نتائج حاليًا</strong><span>جرّب كلمة بحث مختلفة أو تصفح قسمًا آخر.</span></div> :
-      <div className="listingGrid">{ads.map(ad => <a href={`/ads/${ad.id}`} className="listingCard" key={ad.id}>
+      <div className="listingGrid">{ads.map(ad => <a href={`/ad/${ad.id}`} className="listingCard" key={ad.id}>
         <div className="listingImage">{ad.images[0] ? <img src={ad.images[0].url} alt="" /> : <span>📷</span>}{ad.featured && <b>مميز</b>}</div>
         <div className="listingInfo"><small>{ad.category.nameAr}{ad.area ? ` • ${ad.area.nameAr}` : ""}</small><h2>{ad.title}</h2><strong>{ad.price ? `${Number(ad.price).toLocaleString("ar-EG")} ج.م` : "السعر عند التواصل"}</strong></div>
       </a>)}</div>}
