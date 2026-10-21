@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   const [category, governorate, area] = await Promise.all([db.category.findUnique({where:{id:parsed.data.categoryId},select:{active:true,parent:{select:{active:true}}}}),db.governorate.findUnique({where:{id:parsed.data.governorateId},select:{active:true}}),parsed.data.areaId?db.area.findUnique({where:{id:parsed.data.areaId},select:{active:true,governorateId:true}}):Promise.resolve(null)]);
   if(!category?.active || category.parent?.active===false) return NextResponse.json({error:"CATEGORY_UNAVAILABLE"},{status:422});
   if(!governorate?.active) return NextResponse.json({error:"GOVERNORATE_UNAVAILABLE"},{status:422});
-  if(area && (!area.active || area.governorateId!==parsed.data.governorateId)) return NextResponse.json({error:"AREA_UNAVAILABLE"},{status:422});
+  if(parsed.data.areaId && (!area || !area.active || area.governorateId!==parsed.data.governorateId)) return NextResponse.json({error:"AREA_UNAVAILABLE"},{status:422});
 
   const ad = await db.ad.create({
     data: {
