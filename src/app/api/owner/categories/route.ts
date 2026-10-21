@@ -35,7 +35,8 @@ export async function POST(request:NextRequest){
   const slug=typeof b?.slug==="string"?b.slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,70):"";
   if(nameAr.length<2||nameEn.length<2||slug.length<2)return NextResponse.json({error:"INVALID_INPUT"},{status:422});
   if(await db.category.findUnique({where:{slug},select:{id:true}}))return NextResponse.json({error:"SLUG_EXISTS"},{status:409});
-  const parentId=typeof b.parentId==="string"&&b.parentId?b.parentId:null;if(parentId&&!await db.category.findUnique({where:{id:parentId},select:{id:true}}))return NextResponse.json({error:"PARENT_NOT_FOUND"},{status:422});
+  const parentId=typeof b.parentId==="string"&&b.parentId?b.parentId:null;
+  if(parentId){const parent=await db.category.findUnique({where:{id:parentId},select:{id:true,parentId:true,active:true}});if(!parent)return NextResponse.json({error:"PARENT_NOT_FOUND"},{status:422});if(parent.parentId)return NextResponse.json({error:"MAX_CATEGORY_DEPTH"},{status:422});if(!parent.active)return NextResponse.json({error:"PARENT_INACTIVE"},{status:422});}
   const last=await db.category.findFirst({where:{parentId},orderBy:{sortOrder:"desc"},select:{sortOrder:true}});
   const category=await db.category.create({data:{nameAr,nameEn,slug,parentId,icon:typeof b.icon==="string"?b.icon.trim().slice(0,12)||null:null,sortOrder:(last?.sortOrder||0)+1},select:{id:true,parentId:true,nameAr:true,nameEn:true,slug:true,active:true,icon:true,imageUrl:true,sortOrder:true,_count:{select:{ads:true}}}});
   await db.auditLog.create({data:{actorId:actor!.id,action:"CATEGORY_CREATED",entityType:"Category",entityId:category.id,metadata:{slug}}});
